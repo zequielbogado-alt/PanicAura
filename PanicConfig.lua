@@ -11,7 +11,7 @@ local COL_Y, COL_O, COL_R = "|cffffd10d", "|cffff8000", "|cffff1a1a"
 -- Ventana principal
 --------------------------------------------------------------------------------
 local configFrame = CreateFrame("Frame", "PanicAuraConfigFrame", UIParent)
-configFrame:SetSize(480, 630)
+configFrame:SetSize(520, 560)
 configFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 configFrame:SetFrameStrata("DIALOG")
 configFrame:SetBackdrop({
@@ -73,13 +73,14 @@ local function Header(parent, text, anchorTo, yOff)
 end
 
 -- anchor: elemento previo; devuelve el checkbox
-local function CheckBox(parent, label, key, tip, anchor, onChange, yOff)
+local function CheckBox(parent, label, key, tip, anchor, onChange, yOff, xOff, customAnchorPoint)
     local cb = CreateFrame("CheckButton", nextName("CB"), parent, "UICheckButtonTemplate")
     cb:SetSize(24, 24)
+    local pPoint = customAnchorPoint or "BOTTOMLEFT"
     if anchor.line then
-        cb:SetPoint("TOPLEFT", anchor.line, "BOTTOMLEFT", 0, yOff or -6)
+        cb:SetPoint("TOPLEFT", anchor.line, pPoint, xOff or 0, yOff or -6)
     else
-        cb:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, yOff or -2)
+        cb:SetPoint("TOPLEFT", anchor, pPoint, xOff or 0, yOff or -2)
     end
     local text = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     text:SetPoint("LEFT", cb, "RIGHT", 2, 0)
@@ -94,12 +95,12 @@ local function CheckBox(parent, label, key, tip, anchor, onChange, yOff)
     return cb
 end
 
-local function Slider(parent, label, key, minV, maxV, step, fmt, scale, anchor, onChange, xOff, yOff)
+local function Slider(parent, label, key, minV, maxV, step, fmt, scale, anchor, onChange, xOff, yOff, width)
     local name = nextName("Slider")
     local s = CreateFrame("Slider", name, parent, "OptionsSliderTemplate")
     s:SetMinMaxValues(minV, maxV)
     s:SetValueStep(step)
-    s:SetWidth(190)
+    s:SetWidth(width or 180)
     s:SetHeight(16)
     s:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", xOff or 8, yOff or -26)
     _G[name .. "Text"]:SetText(label)
@@ -149,14 +150,14 @@ local tabNames = { "General", "Alertas", "Die & Rise", "Ranuras" }
 for i, n in ipairs(tabNames) do
     local page = CreateFrame("Frame", nil, configFrame)
     page:SetPoint("TOPLEFT", configFrame, "TOPLEFT", 22, -88)
-    page:SetPoint("BOTTOMRIGHT", configFrame, "BOTTOMRIGHT", -22, 62)
+    page:SetPoint("BOTTOMRIGHT", configFrame, "BOTTOMRIGHT", -22, 60)
     page:Hide()
     pages[i] = page
 
     local t = CreateFrame("Button", nil, configFrame, "UIPanelButtonTemplate")
-    t:SetSize(96, 24)
+    t:SetSize(110, 24)
     t:SetText(n)
-    t:SetPoint("TOPLEFT", configFrame, "TOPLEFT", 24 + (i - 1) * 100, -60)
+    t:SetPoint("TOPLEFT", configFrame, "TOPLEFT", 26 + (i - 1) * 118, -60)
     t:SetScript("OnClick", function() ShowPage(i) end)
     tabs[i] = t
 end
@@ -175,61 +176,74 @@ do
     local c4 = CheckBox(p, "Destello también en alerta amarilla/naranja", "flashWarn", "Desmarcalo si querés que el destello aparezca solo en vida crítica (rojo).", c3)
     local c5 = CheckBox(p, "Mostrar teclas rápidas en los iconos", "showKeybinds", nil, c4, function() PA:UpdateLayout() end)
 
-    local h2 = Header(p, "Sonido", c5, -10)
+    local h2 = Header(p, "Sonido", c5, -8)
     local s1 = CheckBox(p, "Sonido en alerta roja (vida crítica)", "soundAlert", nil, h2)
     local s2 = CheckBox(p, "Sonido suave en alerta amarilla/naranja", "soundWarn", "Se reproduce solo al subir de nivel de alerta.", s1)
 
-    local h3 = Header(p, "Apariencia", s2, -10)
-    local sl1 = Slider(p, "Tamaño de iconos", "iconSize", 32, 64, 2, "%d px", 1, h3, function() PA:UpdateLayout() end, 8, -30)
-    local sl2 = Slider(p, "Escala de la barra", "hudScale", 70, 150, 10, "%d%%", 100, sl1, function() PA:ApplyScale() end, 0, -32)
-    local sl3 = Slider(p, "Intensidad del destello", "flashIntensity", 20, 100, 10, "%d%%", 100, sl2, nil, 0, -32)
+    local h3 = Header(p, "Apariencia", s2, -8)
+    local sl1 = Slider(p, "Tamaño de iconos", "iconSize", 32, 64, 2, "%d px", 1, h3, function() PA:UpdateLayout() end, 4, -22, 155)
+    local sl2 = Slider(p, "Escala de la barra", "hudScale", 70, 150, 10, "%d%%", 100, h3, function() PA:ApplyScale() end, 238, -22, 155)
+    local sl3 = Slider(p, "Intensidad del destello", "flashIntensity", 20, 100, 10, "%d%%", 100, sl1, nil, 4, -24, 155)
 end
 
 --------------------------------------------------------------------------------
--- Pestaña 2: Alertas (vida, cazador, atacantes)
+-- Pestaña 2: Alertas (vida, cazador, atacantes, zona)
 --------------------------------------------------------------------------------
 do
     local p = pages[2]
-    local h1 = Header(p, "Vida  " .. COL_Y .. "(amarillo)|r  " .. COL_R .. "(rojo)|r", p, 0)
+    local h1 = Header(p, "Supervivencia: Salud & Cazador", p, 0)
     h1:ClearAllPoints(); h1:SetPoint("TOPLEFT", p, "TOPLEFT", 0, 0)
 
-    local sCrit = Slider(p, COL_R .. "Alerta ROJA|r al llegar a (% vida)", "hpThreshold", 10, 60, 5, "%d%%", 1, h1, function(v)
+    -- Fila 1 de sliders: Alerta Roja a la izquierda, Aviso Amarillo a la derecha
+    local sCrit = Slider(p, COL_R .. "Alerta ROJA|r (% vida)", "hpThreshold", 10, 60, 5, "%d%%", 1, h1, function(v)
         if (PA.db.warnThreshold or 70) < v + 5 then PA.db.warnThreshold = v + 5 end
-    end, 8, -30)
-    local cbWarn = CheckBox(p, COL_Y .. "Aviso AMARILLO|r previo (vida decreciente)", "warnEnabled", "Aviso discreto antes de llegar a la crítica.", sCrit, nil, -10)
-    local sWarn = Slider(p, "Aviso amarillo al llegar a (% vida)", "warnThreshold", 20, 90, 5, "%d%%", 1, cbWarn, function(v)
-        if PA.db.hpThreshold > v - 5 then PA.db.hpThreshold = math.max(10, v - 5) end
-    end, 8, -24)
-    local cbPet = CheckBox(p, "Avisar si la mascota muere en combate", "triggerOnPetDeath", nil, sWarn, nil, -10)
+    end, 4, -22, 155)
 
-    local h2 = Header(p, COL_O .. "Cazador|r - Rango de seguridad", cbPet, -8)
-    local cbRange = CheckBox(p, "Avisar si un enemigo entra en zona muerta / melé", "rangeWarn",
-        "Alerta NARANJA cuando un enemigo que te ataca está a menos de ~8-10 m o cuerpo a cuerpo. Sugiere Aspecto del guepardo/mono, Golpe de alas o Trampa.", h2)
+    local sWarn = Slider(p, COL_Y .. "Aviso AMARILLO|r (% vida)", "warnThreshold", 20, 90, 5, "%d%%", 1, h1, function(v)
+        if PA.db.hpThreshold > v - 5 then PA.db.hpThreshold = math.max(10, v - 5) end
+    end, 238, -22, 155)
+
+    -- Fila 2: Checkboxes de salud
+    local cbWarn = CheckBox(p, "Activar aviso AMARILLO previo", "warnEnabled",
+        "Aviso suave antes de llegar a vida crítica.", sCrit, nil, -12, 0)
+
+    local cbPet = CheckBox(p, "Avisar muerte de mascota", "triggerOnPetDeath",
+        "Dispara alerta si tu mascota muere en combate.", sWarn, nil, -12, 0)
+
+    -- Fila 3: Rango Cazador
+    local cbRange = CheckBox(p, COL_O .. "Cazador:|r Avisar zona muerta (< 8 m) / melé", "rangeWarn",
+        "Alerta NARANJA si un enemigo que te ataca está en zona muerta o melé. Sugiere Aspectos, Golpe de alas o Trampa.", cbWarn, nil, -4, 0)
     if not isHunter then
         cbRange.label:SetTextColor(0.5, 0.5, 0.5)
         local note = p:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-        note:SetPoint("TOPLEFT", cbRange, "BOTTOMLEFT", 26, 0)
-        note:SetText("(solo aplica a personajes Cazador)")
+        note:SetPoint("LEFT", cbRange.label, "RIGHT", 8, 0)
+        note:SetText("(solo aplica a Cazador)")
     end
 
-    local h3 = Header(p, COL_R .. "Atacantes|r - Contador de agresores", cbRange, isHunter and -8 or -22)
+    -- Header 2: Atacantes (Aggro Count)
+    local h2 = Header(p, COL_R .. "Atacantes|r - Contador de Agresores", cbRange, -10)
+
     local cbThreat = CheckBox(p, "Mostrar contador rojo junto a la barra", "threatCount",
-        "Cuenta enemigos que te atacan o te tienen como objetivo (por registro de combate y objetivo/foco/grupo).", h3)
-    local cbTA = CheckBox(p, "Aviso amarillo si hay muchos atacantes", "threatAlert", nil, cbThreat, nil, -2)
-    local sMin = Slider(p, "Desde cuántos atacantes", "threatAlertMin", 2, 10, 1, "%d", 1, cbTA, nil, 8, -24)
+        "Cuenta enemigos que te atacan o te tienen como objetivo directo.", h2, nil, -6, 0)
 
-    local h4 = Header(p, COL_O .. "Zona Peligrosa|r - Enemigos de Nivel Superior", sMin, -10)
-    local cbZone = CheckBox(p, "Avisar al entrar a una zona de nivel superior", "zoneDangerAlert",
-        "Muestra un mensaje central con sonido y destellos al entrar a una zona donde los enemigos superan tu nivel. No activa botones de pánico.", h4)
-    local sDiff = Slider(p, "Superan en más de (niveles)", "zoneDangerDiff", 1, 5, 1, "+%d niv.", 1, cbZone, nil, 8, -24)
-    local cbZFlash = CheckBox(p, "Destellos en bordes de pantalla", "zoneDangerFlash", "Muestra 3 pulsos suaves en los bordes de la pantalla.", sDiff, nil, -10)
-    local cbZSound = CheckBox(p, "Sonido de advertencia", "zoneDangerSound", nil, cbZFlash, nil, -2)
+    local cbTA = CheckBox(p, "Aviso si hay muchos atacantes", "threatAlert",
+        "Alerta amarilla preventiva si te atacan N o más enemigos.", cbThreat, nil, 0, 238, "TOPLEFT")
 
-    local btnTestZone = Button(p, "Probar Zona", 95, function()
-        if PA.TestZoneAlert then PA:TestZoneAlert() end
-    end)
-    btnTestZone:SetPoint("LEFT", cbZSound, "RIGHT", 140, 0)
-    Tooltip(btnTestZone, "Simula la alerta de zona peligrosa entrando a Bosque del Ocaso.")
+    local sMin = Slider(p, "Desde cuántos atacantes", "threatAlertMin", 2, 8, 1, "%d enem.", 1, cbThreat, nil, 4, -22, 155)
+
+    -- Header 3: Zona Peligrosa
+    local h3 = Header(p, COL_O .. "Exploración|r - Alerta de Zona Peligrosa", sMin, -10)
+
+    local cbZone = CheckBox(p, "Avisar al ingresar a zona con enemigos de nivel superior", "zoneDangerAlert",
+        "Alerta preventiva con cartel central, sonido y destellos al cruzar a una zona peligrosa. No activa botones de pánico.", h3, nil, -6, 0)
+
+    local sDiff = Slider(p, "Superan en más de", "zoneDangerDiff", 1, 5, 1, "+%d niv.", 1, cbZone, nil, 4, -22, 155)
+
+    local cbZFlash = CheckBox(p, "Destellos en bordes de pantalla", "zoneDangerFlash",
+        "Emite 3 pulsos suaves de destello visual que se desvanecen solos.", cbZone, nil, -26, 238, "TOPLEFT")
+
+    local cbZSound = CheckBox(p, "Sonido de advertencia", "zoneDangerSound",
+        "Reproduce un sonido de alarma al ingresar.", cbZFlash, nil, -4, 0)
 end
 
 --------------------------------------------------------------------------------
@@ -308,7 +322,7 @@ do
         lbl:SetPoint("TOPLEFT", hint, "BOTTOMLEFT", 4, -16 - (i - 1) * 34)
 
         local eb = CreateFrame("EditBox", "PanicAuraSlotEB" .. i, p, "InputBoxTemplate")
-        eb:SetSize(280, 22)
+        eb:SetSize(320, 22)
         eb:SetAutoFocus(false)
         eb:SetPoint("LEFT", lbl, "RIGHT", 14, 0)
         eb:SetScript("OnTextChanged", function(self)
@@ -382,13 +396,18 @@ local testLbl = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 testLbl:SetPoint("LEFT", bar, "LEFT", 0, 0)
 testLbl:SetText("Probar:")
 
-local tY = Button(bar, COL_Y .. "Amarilla|r", 62, function() ToggleTest(1) end)
+local tY = Button(bar, COL_Y .. "Amarilla|r", 58, function() ToggleTest(1) end)
 tY:SetPoint("LEFT", testLbl, "RIGHT", 4, 0)
-local tO = Button(bar, COL_O .. "Naranja|r", 62, function() ToggleTest(2) end)
+local tO = Button(bar, COL_O .. "Naranja|r", 58, function() ToggleTest(2) end)
 tO:SetPoint("LEFT", tY, "RIGHT", 2, 0)
-local tR = Button(bar, COL_R .. "Roja|r", 52, function() ToggleTest(3) end)
+local tR = Button(bar, COL_R .. "Roja|r", 48, function() ToggleTest(3) end)
 tR:SetPoint("LEFT", tO, "RIGHT", 2, 0)
-testButtons[1], testButtons[2], testButtons[3] = tY, tO, tR
+local tZ = Button(bar, "|cffffaa00Zona|r", 50, function()
+    if PA.TestZoneAlert then PA:TestZoneAlert() end
+end)
+tZ:SetPoint("LEFT", tR, "RIGHT", 2, 0)
+Tooltip(tZ, "Prueba la alerta preventiva de zona peligrosa (simulando Bosque del Ocaso).")
+testButtons[1], testButtons[2], testButtons[3], testButtons[4] = tY, tO, tR, tZ
 
 local btnClose = Button(bar, "Cerrar", 64, function() configFrame:Hide() end)
 btnClose:SetPoint("RIGHT", bar, "RIGHT", 0, 0)
