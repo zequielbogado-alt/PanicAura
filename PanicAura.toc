@@ -2,7 +2,7 @@
 ## Title: |cffff2222PanicAura|r [Hardcore Alert]
 ## Notes: Alarma de panico para Hardcore con alertas visuales de bordes, alerta por niveles (amarilla/naranja/roja), rango de seguridad del Cazador, contador de atacantes, deteccion de muerte de pet, alerta de zona peligrosa e iconos de salvavidas con keybinds.
 ## Author: TuWoW
-## Version: 1.3.0
+## Version: 1.3.1
 ## SavedVariablesPerCharacter: PanicAuraDB
 
 PanicAura_ZoneData.lua
