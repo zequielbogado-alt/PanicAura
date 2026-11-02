@@ -197,3 +197,4 @@ function PA:GetZoneLevelData(zoneName)
     if direct then return direct end
     return ZoneLookup[Normalize(zoneName)]
 end
+
