@@ -11,7 +11,7 @@ local COL_Y, COL_O, COL_R = "|cffffd10d", "|cffff8000", "|cffff1a1a"
 -- Ventana principal
 --------------------------------------------------------------------------------
 local configFrame = CreateFrame("Frame", "PanicAuraConfigFrame", UIParent)
-configFrame:SetSize(470, 590)
+configFrame:SetSize(480, 630)
 configFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 configFrame:SetFrameStrata("DIALOG")
 configFrame:SetBackdrop({
@@ -217,6 +217,19 @@ do
         "Cuenta enemigos que te atacan o te tienen como objetivo (por registro de combate y objetivo/foco/grupo).", h3)
     local cbTA = CheckBox(p, "Aviso amarillo si hay muchos atacantes", "threatAlert", nil, cbThreat, nil, -2)
     local sMin = Slider(p, "Desde cuántos atacantes", "threatAlertMin", 2, 10, 1, "%d", 1, cbTA, nil, 8, -24)
+
+    local h4 = Header(p, COL_O .. "Zona Peligrosa|r - Enemigos de Nivel Superior", sMin, -10)
+    local cbZone = CheckBox(p, "Avisar al entrar a una zona de nivel superior", "zoneDangerAlert",
+        "Muestra un mensaje central con sonido y destellos al entrar a una zona donde los enemigos superan tu nivel. No activa botones de pánico.", h4)
+    local sDiff = Slider(p, "Superan en más de (niveles)", "zoneDangerDiff", 1, 5, 1, "+%d niv.", 1, cbZone, nil, 8, -24)
+    local cbZFlash = CheckBox(p, "Destellos en bordes de pantalla", "zoneDangerFlash", "Muestra 3 pulsos suaves en los bordes de la pantalla.", sDiff, nil, -10)
+    local cbZSound = CheckBox(p, "Sonido de advertencia", "zoneDangerSound", nil, cbZFlash, nil, -2)
+
+    local btnTestZone = Button(p, "Probar Zona", 95, function()
+        if PA.TestZoneAlert then PA:TestZoneAlert() end
+    end)
+    btnTestZone:SetPoint("LEFT", cbZSound, "RIGHT", 140, 0)
+    Tooltip(btnTestZone, "Simula la alerta de zona peligrosa entrando a Bosque del Ocaso.")
 end
 
 --------------------------------------------------------------------------------
@@ -440,6 +453,8 @@ SlashCmdList["PANICAURA"] = function(msg)
         ToggleTest(1)
     elseif msg == "test2" then
         ToggleTest(2)
+    elseif msg == "testzone" or msg == "tz" then
+        if PA.TestZoneAlert then PA:TestZoneAlert() end
     elseif msg == "dr0" or msg == "dr1" or msg == "dr2" then
         local st = tonumber(msg:sub(3, 3))
         PA.drStage = st

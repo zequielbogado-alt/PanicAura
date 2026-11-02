@@ -116,6 +116,12 @@ local defaultDB = {
     drSouls = 0,
     drGoal = 300,
     deathLog = {},             -- Historial de muertes del personaje
+    -- Alerta de Zona Peligrosa (Nivel Superior)
+    zoneDangerAlert = true,    -- Avisar al entrar a una zona con enemigos superiores en nivel
+    zoneDangerDiff = 1,        -- Diferencia mínima de nivel (1 = mínimo nivel de zona >= player + 2)
+    zoneDangerSound = true,    -- Reproducir sonido al entrar a zona peligrosa
+    zoneDangerSoundFile = "Sound\\Interface\\RaidWarning.wav",
+    zoneDangerFlash = true,    -- Destellos suaves en los bordes de la pantalla
     locked = false,
     frameX = 0,
     frameY = -120,

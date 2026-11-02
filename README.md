@@ -42,8 +42,25 @@ PanicAura entiende las reglas únicas de **Die & Rise** y se conecta con el sist
 
 ---
 
-### 5. 📜 Historial de Muertes
+### 5. 🗺️ Alerta de Zona Peligrosa (Nivel Superior)
+* **Aviso preventivo al explorar:** Si ingresas a una zona donde los enemigos superan tu nivel en más de 1 nivel (por ejemplo, eres nivel 15 y entras al Bosque del Ocaso donde los enemigos son mínimo nivel 18), el addon te avisa en el instante que cruzas la frontera.
+* **Diseño limpio y no invasivo:** **No activa botones de pánico** ni barras de habilidades. Solo muestra un cartel central con los niveles de la zona (`¡ZONA PELIGROSA: BOSQUE DEL OCASO! Nivel: 18 - 30`), reproduce un sonido de advertencia y emite **3 pulsos suaves de destello** en los bordes de la pantalla que se desvanecen automáticamente tras unos segundos.
+* **Totalmente configurable:** Puedes activar/desactivar la alerta, ajustar la diferencia de niveles requerida (+1 a +5 niveles) o probarla en cualquier momento con `/pa testzone`.
+
+---
+
+### 6. 📜 Historial de Muertes
 En la pestaña **Die & Rise** del menú de opciones queda guardado un registro de las muertes de tu personaje: **fecha, hora, nivel, zona, qué enemigo y habilidad te dio el golpe final**, y a qué estado pasaste (*Vivo → Putrefacto* o *Putrefacto → Esquelético*).
+
+---
+
+## 📦 Estructura Modular del Addon
+
+Para mantener el código limpio, optimizado y sin archivos gigantes monolíticos, PanicAura está organizado en módulos independientes:
+* **`PanicAura_ZoneData.lua`**: Base de datos de niveles de todas las zonas y mazmorras de Azeroth, Terrallende y Rasganorte (en español e inglés).
+* **`PanicAura_ZoneAlert.lua`**: Módulo visual y de sonido para alertas preventivas de zonas peligrosas.
+* **`PanicAura.lua`**: Lógica central de supervivencia, alertas de vida, contador de atacantes, keybinds y Die & Rise.
+* **`PanicConfig.lua`**: Panel visual de opciones con 4 pestañas y comandos slash.
 
 ---
 
@@ -52,7 +69,7 @@ En la pestaña **Die & Rise** del menú de opciones queda guardado un registro d
 1. Descarga la carpeta **`PanicAura`**.
 2. Cópiala dentro de la carpeta de addons de tu juego:
    `C:\TuWoW\TuWoW-Client\Interface\AddOns\PanicAura`
-3. Asegúrate de que adentro estén directamente los archivos `PanicAura.toc`, `PanicAura.lua` y `PanicConfig.lua`.
+3. Asegúrate de que adentro estén directamente los archivos del addon (`.lua`, `.toc`, etc.).
 4. Entra al juego (o escribe `/reload` en el chat si ya estabas adentro).
 
 ---
@@ -68,6 +85,7 @@ Tienes un **botón en el borde del Minimapa** (y también comandos en el chat):
 
 ### Comandos útiles para probar todo sin peligro:
 * `/pa` o `/panicaura` — Abre la ventana de configuración.
+* `/pa testzone` o `/pa tz` — Prueba la **Alerta de Zona Peligrosa** (simula entrar a una zona de nivel superior).
 * `/pa test1` / `/pa test2` / `/pa test` — Prueba la alerta Amarilla, Naranja o Roja.
 * `/pa dr1` — Simula cómo se ve el indicador cuando estás en estado **Putrefacto**.
 * `/pa dr2` — Simula cómo se ve el indicador cuando estás en estado **Esquelético** (con contador de almas y pociones bloqueadas con `X`).
