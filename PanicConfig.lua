@@ -275,8 +275,10 @@ do
         "Adapta las alertas según tu estado (Vivo, Putrefacto o Esquelético) y sincroniza el contador de almas del servidor.", h1, function() PA:UpdateDRWidget() end)
     local c2 = CheckBox(p, "Mostrar indicador de Estado, Almas (0/300) y Corporeidad", "drShowWidget",
         "Muestra una barra compacta con tu estado actual, progreso de 300 almas y cuenta regresiva de 36 s de corporeidad.", c1, function() PA:UpdateDRWidget() end)
+    local c2b = CheckBox(p, "Ocultar indicador si estoy Vivo (mostrar solo en Putrefacto/Esquelético)", "drHideWhenAlive",
+        "Si lo marcas, el indicador estará oculto mientras no hayas muerto y aparecerá solo cuando sufras una penalización.", c2, function() PA:UpdateDRWidget() end)
     local c3 = CheckBox(p, "Aumentar umbrales de vida en Putrefacto (+10%) y Esquelético (+15%)", "drStageBoost",
-        "Si ya perdiste una vida, la alerta amarilla y roja se disparan antes para darte más margen de reacción.", c2)
+        "Si ya perdiste una vida, la alerta amarilla y roja se disparan antes para darte más margen de reacción.", c2b)
     local c4 = CheckBox(p, "Avisar náuseas y vómito al comer (Putrefacto)", "drNauseaWarn",
         "Detecta en el chat cuando tu estómago putrefacto rechaza la comida y cuando comenzás a vomitar.", c3)
     local c5 = CheckBox(p, "Marcar pociones bloqueadas con 'X' en estado Esquelético", "drBlockPotions",
@@ -416,12 +418,16 @@ local btnUnlock = Button(bar, "Mover barra", 86, function(self)
     PA.db.locked = not PA.db.locked
     if not PA.db.locked then
         self:SetText("Bloquear")
+        PA.mainFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+        if PA.drWidget then PA.drWidget:SetFrameStrata("FULLSCREEN_DIALOG") end
         PA.mainFrame:EnableMouse(true)
         PA.mainFrame:Show()
         PA.statusText:SetText("Arrastrá con click izquierdo")
         PA:UpdateDRWidget()
     else
         self:SetText("Mover barra")
+        PA.mainFrame:SetFrameStrata("HIGH")
+        if PA.drWidget then PA.drWidget:SetFrameStrata("HIGH") end
         PA.mainFrame:EnableMouse(false)
         PA.statusText:SetText("")
         if not PA.inPanic and not PA.testMode then
@@ -454,6 +460,8 @@ configFrame:SetScript("OnHide", function()
     if PA.testMode then StopTests() end
     if not PA.db.locked then
         PA.db.locked = true
+        PA.mainFrame:SetFrameStrata("HIGH")
+        if PA.drWidget then PA.drWidget:SetFrameStrata("HIGH") end
         PA.mainFrame:EnableMouse(false)
         PA.statusText:SetText("")
         if not PA.inPanic then PA.mainFrame:Hide() end

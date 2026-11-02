@@ -104,6 +104,7 @@ local defaultDB = {
     -- Modo Die & Rise (TuWoW Hardcore)
     drEnabled = true,          -- Integración con estados Normal / Putrefacto / Esquelético
     drShowWidget = true,       -- Mostrar indicador compacto de estado, almas y corporeidad
+    drHideWhenAlive = false,   -- Ocultar indicador mientras esté Vivo (mostrar solo en Putrefacto/Esquelético)
     drWidgetX = 0,
     drWidgetY = -175,
     drStageBoost = true,       -- Subir umbrales de vida (+10% en Putrefacto, +15% en Esquelético)
@@ -810,7 +811,8 @@ local SOUL_PREFIX = "TuWoWSouls"
 local drWidget = CreateFrame("Frame", "PanicAuraDRWidget", UIParent)
 drWidget:SetSize(220, 26)
 drWidget:SetPoint("CENTER", UIParent, "CENTER", 0, -175)
-drWidget:SetFrameStrata("MEDIUM")
+drWidget:SetFrameStrata("HIGH")
+drWidget:SetClampedToScreen(true)
 drWidget:SetBackdrop({
     bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -927,9 +929,7 @@ function PA:UpdateDRWidget()
     local corpRem = (PA.corporealEnd and PA.corporealEnd > now) and (PA.corporealEnd - now) or 0
     local nauseaRem = (PA.nauseaActive and (now - PA.nauseaActive) < 25) and (25 - (now - PA.nauseaActive)) or 0
 
-    if st == 0 and corpRem == 0 and nauseaRem == 0 and (PA.db.locked ~= false) then
-        -- En estado Normal (vivo sin penalizaciones) mantenemos la pantalla limpia;
-        -- sólo mostramos el widget si está desbloqueado para moverlo o en estados 1 / 2
+    if PA.db.drHideWhenAlive and st == 0 and corpRem == 0 and nauseaRem == 0 and (PA.db.locked ~= false) then
         drWidget:Hide()
         return
     end
@@ -969,8 +969,12 @@ function PA:UpdateDRWidget()
         drBar:Hide()
     else
         drIcon:SetTexture("Interface\\Icons\\Spell_Holy_Resurrection")
-        drText:SetText("|cff22ff22NORMAL (Vivo)|r · Posición del indicador")
-        drWidget:SetBackdropBorderColor(0.3, 0.8, 0.3, 0.8)
+        if PA.db.locked == false then
+            drText:SetText("|cff22ff22VIVO|r · Arrastrá para mover")
+        else
+            drText:SetText("|cff22ff22ESTADO: VIVO|r · |cff88ff88Vidas intactas|r")
+        end
+        drWidget:SetBackdropBorderColor(0.2, 0.85, 0.3, 0.85)
         drBar:Hide()
     end
 
