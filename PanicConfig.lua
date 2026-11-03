@@ -482,13 +482,24 @@ SlashCmdList["PANICAURA"] = function(msg)
         ToggleTest(2)
     elseif msg == "testzone" or msg == "tz" then
         if PA.TestZoneAlert then PA:TestZoneAlert() end
-    elseif msg == "dr0" or msg == "dr1" or msg == "dr2" then
-        local st = tonumber(msg:sub(3, 3))
-        PA.drStage = st
-        if PA.db then PA.db.drStage = st end
-        if st == 2 and (PA.drSouls or 0) == 0 then PA.drSouls = 142; PA.drGoal = 300 end
+    elseif msg == "dr0" or msg == "vivo" or msg == "purificar" then
+        PA.drStage = 0
+        if PA.db then PA.db.drStage = 0 end
+        PA.nauseaActive = nil
+        PA.corporealEnd = nil
         PA:UpdateDRWidget()
-        DEFAULT_CHAT_FRAME:AddMessage("|cffff2222PanicAura:|r Estado Die & Rise simulado: " .. st)
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff2222PanicAura:|r Estado Die & Rise cambiado a: |cff22ff22VIVO (Purificado)|r")
+    elseif msg == "dr1" or msg == "putrefacto" then
+        PA.drStage = 1
+        if PA.db then PA.db.drStage = 1 end
+        PA:UpdateDRWidget()
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff2222PanicAura:|r Estado Die & Rise cambiado a: |cff88ff22PUTREFACTO|r")
+    elseif msg == "dr2" or msg == "esqueleto" or msg == "esqueletico" then
+        PA.drStage = 2
+        if PA.db then PA.db.drStage = 2 end
+        if (PA.drSouls or 0) == 0 then PA.drSouls = 142; PA.drGoal = 300 end
+        PA:UpdateDRWidget()
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff2222PanicAura:|r Estado Die & Rise cambiado a: |cffddddddESQUELÉTICO|r")
     elseif msg == "corp" then
         PA.corporealEnd = GetTime() + 36
         PA:UpdateDRWidget()

@@ -855,15 +855,42 @@ drBar:SetMinMaxValues(0, 300)
 drBar:SetValue(0)
 drBar:Hide()
 
+function PA:HasPurificationElixir()
+    for b = 0, 4 do
+        local numSlots = GetContainerNumSlots(b)
+        for s = 1, numSlots do
+            local link = GetContainerItemLink(b, s)
+            if link then
+                local low = link:lower()
+                if low:find("purificaci") or low:find("elixir de purific") then
+                    return true, link
+                end
+            end
+        end
+    end
+    return false
+end
+
 drWidget:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_TOP")
     local st = PA.drStage or 0
     if st == 0 then
         GameTooltip:AddLine("Estado Die & Rise: |cff22ff22Vivo (Normal)|r", 1, 1, 1)
         GameTooltip:AddLine("Tenés tus vidas intactas. Si morís pasarás a estado Putrefacto.", 0.8, 0.8, 0.8, true)
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("|cffffff00Tip:|r Si morís y quedás Putrefacto, podés buscar o comerciar un |cff00ff00Elixir de Purificación|r (dropeado por rares) para volver a estar Vivo.", 0.8, 0.9, 0.8, true)
     elseif st == 1 then
         GameTooltip:AddLine("Estado Die & Rise: |cff88ff22Putrefacto|r", 1, 1, 1)
         GameTooltip:AddLine("Al comer podés sentir náuseas y vomitar. ¡Si morís pasarás a Esquelético!", 1, 0.8, 0.2, true)
+        local hasElixir = PA.HasPurificationElixir and PA:HasPurificationElixir()
+        if hasElixir then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine("|cff00ff00¡Tenés un Elixir de Purificación en tu mochila!|r", 1, 1, 1)
+            GameTooltip:AddLine("Bebelo para curar la putrefacción y volver inmediatamente al estado VIVO.", 0.8, 1, 0.8, true)
+        else
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine("|cffffff00Tip:|r Los monstruos raros (rares) dropean |cff00ff00Elixir de Purificación|r de tu rango de nivel para volver a estar Vivo.", 0.9, 0.9, 0.9, true)
+        end
     else
         GameTooltip:AddLine("Estado Die & Rise: |cffccccccEsquelético|r", 1, 1, 1)
         GameTooltip:AddLine(string.format("Almas recolectadas: |cffffff00%d / %d|r", PA.drSouls or 0, PA.drGoal or 300), 1, 1, 1)
@@ -909,9 +936,28 @@ local function ScanPlayerAurasForDR()
             PA.nauseaActive = GetTime()
         end
     end
-    if foundStage then
-        PA.drStage = foundStage
-        if PA.db then PA.db.drStage = foundStage end
+    local newStage = foundStage or 0
+    local prevStage = PA.drStage or (PA.db and PA.db.drStage) or 0
+
+    if prevStage ~= newStage then
+        -- Si pasó de Putrefacto (1) o Esquelético (2) a Vivo (0)
+        if prevStage > 0 and newStage == 0 then
+            PA.nauseaActive = nil
+            PA.corporealEnd = nil
+            PlaySound("LevelUp")
+            PA.tempAlert = {
+                title = "¡HAS SIDO PURIFICADO!",
+                sub = "Recuperaste el estado VIVO · Vidas intactas",
+                level = 1,
+                untilTime = GetTime() + 6,
+            }
+        end
+        PA.drStage = newStage
+        if PA.db then PA.db.drStage = newStage end
+        PA:UpdateDRWidget()
+    else
+        PA.drStage = newStage
+        if PA.db then PA.db.drStage = newStage end
     end
     if foundSouls and not PA.drSoulsFresh then
         PA.drSouls = foundSouls
@@ -959,9 +1005,13 @@ function PA:UpdateDRWidget()
         drBar:Show()
     elseif st == 1 then
         drIcon:SetTexture("Interface\\Icons\\Ability_Creature_Disease_02")
+        local hasElixir = PA.HasPurificationElixir and PA:HasPurificationElixir()
         if nauseaRem > 0 then
             drText:SetText("|cffff8000PUTREFACTO · ¡NÁUSEAS ACTIVAS!|r")
             drWidget:SetBackdropBorderColor(1.0, 0.5, 0.0, 0.95)
+        elseif hasElixir then
+            drText:SetText("|cff88ff22PUTREFACTO|r · |cff00ff00¡Tenés Elixir! Usalo|r")
+            drWidget:SetBackdropBorderColor(0.2, 0.9, 0.4, 0.9)
         else
             drText:SetText("|cff88ff22PUTREFACTO|r · |cffffaaaa1 muerte = Esquelético|r")
             drWidget:SetBackdropBorderColor(0.5, 0.9, 0.2, 0.85)
@@ -1329,8 +1379,23 @@ local function HandleDieAndRiseChat(msg)
     local low = msg:lower()
     local now = GetTime()
 
+    -- 0) Purificación (Elixir de Purificación)
+    if low:find("purific") or low:find("elixir de purific") or low:find("dejas de estar putrefacto") or low:find("vuelves a estar vivo") or low:find("has sido purificado") then
+        PA.nauseaActive = nil
+        PA.corporealEnd = nil
+        PA.drStage = 0
+        if PA.db then PA.db.drStage = 0 end
+        PlaySound("LevelUp")
+        PA.tempAlert = {
+            title = "¡HAS SIDO PURIFICADO!",
+            sub = "Recuperaste el estado VIVO · Vidas intactas",
+            level = 1,
+            untilTime = now + 6,
+        }
+        PA:UpdateDRWidget()
+        CheckPanicState()
     -- 1) Pre-aviso de náuseas en estado Putrefacto
-    if PA.db.drNauseaWarn and (low:find("estomago putrefacto rechaza") or low:find("estómago putrefacto rechaza") or low:find("sientes fuertes nauseas") or low:find("sientes fuertes náuseas")) then
+    elseif PA.db.drNauseaWarn and (low:find("estomago putrefacto rechaza") or low:find("estómago putrefacto rechaza") or low:find("sientes fuertes nauseas") or low:find("sientes fuertes náuseas")) then
         PA.nauseaActive = now
         PA.tempAlert = {
             title = "¡NÁUSEAS! TU ESTÓMAGO RECHAZA LA COMIDA",
@@ -1372,26 +1437,38 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4, ..
         if arg1 == SOUL_PREFIX and arg3 == "WHISPER" and arg4 == UnitName("player") then
             local st, souls, goal = string.match(arg2 or "", "^(%d+):(%d+):(%d+)$")
             st, souls, goal = tonumber(st), tonumber(souls), tonumber(goal)
-            if st and st <= 2 and souls and goal and goal >= 1 then
+            if st and st >= 0 and st <= 2 then
                 local prevSouls = PA.drSouls or 0
                 local prevStage = PA.drStage or 0
                 PA.drStage = st
-                PA.drSouls = souls
-                PA.drGoal = goal
+                PA.drSouls = souls or 0
+                PA.drGoal = (goal and goal >= 1) and goal or 300
                 PA.drSoulsFresh = GetTime()
                 if PA.db then
                     PA.db.drStage = st
-                    PA.db.drSouls = souls
-                    PA.db.drGoal = goal
+                    PA.db.drSouls = PA.drSouls
+                    PA.db.drGoal = PA.drGoal
+                end
+                -- Si volvió a estado Vivo (0) desde Putrefacto o Esquelético:
+                if prevStage > 0 and st == 0 then
+                    PA.nauseaActive = nil
+                    PA.corporealEnd = nil
+                    PlaySound("LevelUp")
+                    PA.tempAlert = {
+                        title = "¡HAS SIDO PURIFICADO!",
+                        sub = "Recuperaste el estado VIVO · Vidas intactas",
+                        level = 1,
+                        untilTime = GetTime() + 6,
+                    }
                 end
                 -- Si sacrificó 1 alma (bajó en 1 estando en estado Esquelético), iniciar el cronómetro de 36 s
-                if st == 2 and prevStage == 2 and prevSouls > 0 and souls == prevSouls - 1 and PA.db and PA.db.drCorporealTrack then
+                if st == 2 and prevStage == 2 and prevSouls > 0 and (souls or 0) == prevSouls - 1 and PA.db and PA.db.drCorporealTrack then
                     PA.corporealEnd = GetTime() + 36
                 end
                 -- Si llegó a la meta de almas (ej. 300/300), avisar en pantalla
-                if st == 2 and souls >= goal and prevSouls < goal and PA.db and PA.db.drEnabled then
+                if st == 2 and (souls or 0) >= PA.drGoal and prevSouls < PA.drGoal and PA.db and PA.db.drEnabled then
                     PA.tempAlert = {
-                        title = string.format("¡%d / %d ALMAS RECOLECTADAS!", souls, goal),
+                        title = string.format("¡%d / %d ALMAS RECOLECTADAS!", souls, PA.drGoal),
                         sub = "¡Ya podés canjear tus almas para recuperar tu cuerpo Putrefacto!",
                         level = 1,
                         untilTime = GetTime() + 6,
@@ -1456,6 +1533,9 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4, ..
         wipe(attackers)
         CheckPanicState()
     elseif event == "UPDATE_BINDINGS" or event == "ACTIONBAR_UPDATE_COOLDOWN" or event == "BAG_UPDATE" then
+        if event == "BAG_UPDATE" and (PA.drStage == 1 or PA.drStage == 0) then
+            PA:UpdateDRWidget()
+        end
         if PA.inPanic or PA.testMode then
             UpdateSlots()
         end
