@@ -148,8 +148,9 @@ function PA:ScanPlayerAurasForDR()
             foundStage = 2
         elseif low:find("putrefact") then
             if foundStage ~= 2 then foundStage = 1 end
-        elseif low:find("nausea") or low:find("náusea") or low:find("vomito") or low:find("vómito") then
-            PA.nauseaActive = GetTime()
+        end
+        if duration and duration >= 30 and duration <= 40 and (low:find("corpor") or low:find("alma") or low:find("carne")) then
+            PA.corporealEnd = expTime
         end
     end
 
@@ -161,7 +162,11 @@ function PA:ScanPlayerAurasForDR()
         if prevStage > 0 and newStage == 0 then
             PA.nauseaActive = nil
             PA.corporealEnd = nil
-            PlaySound("LevelUp")
+            if PA.PlayAlertSound then
+                PA:PlayAlertSound("LevelUp", false, 2.0)
+            else
+                PlaySound("LevelUp")
+            end
             PA.tempAlert = {
                 title = "¡HAS SIDO PURIFICADO!",
                 sub = "Recuperaste el estado VIVO · Vidas intactas",
@@ -184,78 +189,75 @@ function PA:ScanPlayerAurasForDR()
 end
 
 --------------------------------------------------------------------------------
--- 5. Actualización Visual del Indicador Die & Rise
+-- 5. Actualización Visual del Widget Die & Rise
 --------------------------------------------------------------------------------
 function PA:UpdateDRWidget()
-    if not PA.db or not PA.db.drEnabled or not PA.db.drShowWidget then
-        drWidget:Hide()
+    if not PA.drWidget then return end
+    if not PA.db or not PA.db.enabled or not PA.db.drEnabled or not PA.db.drShowWidget then
+        PA.drWidget:Hide()
         return
     end
+
     local st = PA.drStage or (PA.db and PA.db.drStage) or 0
-    local now = GetTime()
-    local corpRem = (PA.corporealEnd and PA.corporealEnd > now) and (PA.corporealEnd - now) or 0
-    local nauseaRem = (PA.nauseaActive and (now - PA.nauseaActive) < 25) and (25 - (now - PA.nauseaActive)) or 0
 
-    if PA.db.drHideWhenAlive and st == 0 and corpRem == 0 and nauseaRem == 0 and (PA.db.locked ~= false) then
-        drWidget:Hide()
+    -- Si el usuario eligió ocultar el indicador cuando está Vivo (0 muertes):
+    if st == 0 and PA.db.drHideWhenAlive and not PA.testMode and PA.db.locked then
+        PA.drWidget:Hide()
         return
     end
 
-    if corpRem > 0 and PA.db.drCorporealTrack then
-        drIcon:SetTexture("Interface\\Icons\\Spell_Holy_GreaterHeal")
-        drText:SetText(string.format("|cff66ffccCorporeidad: %.0fs|r (Podés comer/beber)", corpRem))
-        drWidget:SetBackdropBorderColor(0.2, 1.0, 0.8, 0.95)
-        drBar:SetMinMaxValues(0, 36)
-        drBar:SetValue(corpRem)
-        drBar:SetStatusBarColor(0.2, 1.0, 0.8)
-        drBar:Show()
-    elseif st == 2 then
-        local souls = PA.drSouls or (PA.db and PA.db.drSouls) or 0
-        local goal = PA.drGoal or (PA.db and PA.db.drGoal) or 300
-        drIcon:SetTexture("Interface\\Icons\\Spell_Shadow_RaiseDead")
-        if souls >= goal then
-            drText:SetText(string.format("|cff00ff00ESQUELÉTICO · Almas: %d/%d (¡LISTO!)|r", souls, goal))
-            drWidget:SetBackdropBorderColor(0.1, 1.0, 0.1, 0.95)
-        else
-            drText:SetText(string.format("|cffddddddESQUELÉTICO|r · Almas: |cffffff00%d/%d|r", souls, goal))
-            drWidget:SetBackdropBorderColor(0.75, 0.75, 0.85, 0.9)
-        end
-        drBar:SetMinMaxValues(0, goal)
-        drBar:SetValue(math.min(souls, goal))
-        drBar:SetStatusBarColor(0.6, 0.4, 1.0)
-        drBar:Show()
-    elseif st == 1 then
-        drIcon:SetTexture("Interface\\Icons\\Ability_Creature_Disease_02")
-        local hasElixir = PA.HasPurificationElixir and PA:HasPurificationElixir()
-        if nauseaRem > 0 then
-            drText:SetText("|cffff8000PUTREFACTO · ¡NÁUSEAS ACTIVAS!|r")
-            drWidget:SetBackdropBorderColor(1.0, 0.5, 0.0, 0.95)
-        elseif hasElixir then
-            drText:SetText("|cff88ff22PUTREFACTO|r · |cff00ff00¡Tenés Elixir! Usalo|r")
-            drWidget:SetBackdropBorderColor(0.2, 0.9, 0.4, 0.9)
-        else
-            drText:SetText("|cff88ff22PUTREFACTO|r · |cffffaaaa1 muerte = Esquelético|r")
-            drWidget:SetBackdropBorderColor(0.5, 0.9, 0.2, 0.85)
-        end
-        drBar:Hide()
-    else
-        drIcon:SetTexture("Interface\\Icons\\Spell_Holy_Resurrection")
-        if PA.db.locked == false then
-            drText:SetText("|cff22ff22VIVO|r · Arrastrá para mover")
-        else
-            drText:SetText("|cff22ff22ESTADO: VIVO|r · |cff88ff88Vidas intactas|r")
-        end
-        drWidget:SetBackdropBorderColor(0.2, 0.85, 0.3, 0.85)
-        drBar:Hide()
-    end
+    PA.drWidget:Show()
 
-    local w = drText:GetStringWidth() + 38
-    drWidget:SetWidth(math.max(w, 190))
-    drWidget:Show()
+    local now = GetTime()
+    local corpActive = PA.corporealEnd and (PA.corporealEnd > now)
+
+    if st == 0 then
+        -- Estado Vivo (Normal)
+        PA.drIcon:SetTexture("Interface\\Icons\\Spell_Holy_Resurrection")
+        PA.drText:SetText("|cff22ff22Estado: Vivo|r")
+        PA.drWidget:SetBackdropBorderColor(0.2, 0.8, 0.2, 0.9)
+        PA.drBar:Hide()
+    elseif st == 1 then
+        -- Estado Putrefacto (1 muerte)
+        PA.drIcon:SetTexture("Interface\\Icons\\Spell_Shadow_AbominationExplosion")
+        local hasElixir = PA.HasPurificationElixir and PA:HasPurificationElixir()
+        if hasElixir then
+            PA.drText:SetText("|cff88ff22Putrefacto|r |cff00ffff[¡Bebé Elixir!]|r")
+            PA.drWidget:SetBackdropBorderColor(0.0, 0.9, 0.9, 0.9)
+        elseif PA.nauseaActive and (now - PA.nauseaActive < 15) then
+            PA.drText:SetText("|cff88ff22Putrefacto|r |cffff8800(Náuseas)|r")
+            PA.drWidget:SetBackdropBorderColor(1.0, 0.5, 0.0, 0.9)
+        else
+            PA.drText:SetText("|cff88ff22Putrefacto (1 Muerte)|r")
+            PA.drWidget:SetBackdropBorderColor(0.5, 0.8, 0.2, 0.9)
+        end
+        PA.drBar:Hide()
+    else
+        -- Estado Esquelético (2 o más muertes)
+        PA.drIcon:SetTexture("Interface\\Icons\\INV_Misc_Bone_Skull_02")
+        local s = PA.drSouls or 0
+        local g = PA.drGoal or 300
+        if corpActive then
+            local rem = math.max(0, PA.corporealEnd - now)
+            PA.drText:SetText(string.format("|cff00ffffCorpóreo: %.0f s|r |cffffff00(%d/%d)|r", rem, s, g))
+            PA.drWidget:SetBackdropBorderColor(0.0, 0.8, 1.0, 0.95)
+            PA.drBar:SetMinMaxValues(0, 36)
+            PA.drBar:SetValue(rem)
+            PA.drBar:SetStatusBarColor(0.0, 0.8, 1.0)
+            PA.drBar:Show()
+        else
+            PA.drText:SetText(string.format("|cffccccccEsqueleto:|r |cffffff00%d / %d|r almas", s, g))
+            PA.drWidget:SetBackdropBorderColor(0.8, 0.2, 0.2, 0.95)
+            PA.drBar:SetMinMaxValues(0, g)
+            PA.drBar:SetValue(s)
+            PA.drBar:SetStatusBarColor(0.9, 0.3, 0.1)
+            PA.drBar:Show()
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
--- 6. Manejo de Mensajes de Chat y Alertas de Servidor
+-- 6. Escaneo de Mensajes de Chat / Sistema para Die & Rise
 --------------------------------------------------------------------------------
 function PA:HandleDieAndRiseChat(msg)
     if not msg or not PA.db or not PA.db.drEnabled then return end
@@ -268,7 +270,11 @@ function PA:HandleDieAndRiseChat(msg)
         PA.corporealEnd = nil
         PA.drStage = 0
         if PA.db then PA.db.drStage = 0 end
-        PlaySound("LevelUp")
+        if PA.PlayAlertSound then
+            PA:PlayAlertSound("LevelUp", false, 2.0)
+        else
+            PlaySound("LevelUp")
+        end
         PA.tempAlert = {
             title = "¡HAS SIDO PURIFICADO!",
             sub = "Recuperaste el estado VIVO · Vidas intactas",

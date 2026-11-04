@@ -130,7 +130,11 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4, ..
                 if prevStage > 0 and st == 0 then
                     PA.nauseaActive = nil
                     PA.corporealEnd = nil
-                    PlaySound("LevelUp")
+                    if PA.PlayAlertSound then
+                        PA:PlayAlertSound("LevelUp", false, 2.0)
+                    else
+                        PlaySound("LevelUp")
+                    end
                     PA.tempAlert = {
                         title = "¡HAS SIDO PURIFICADO!",
                         sub = "Recuperaste el estado VIVO · Vidas intactas",

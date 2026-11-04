@@ -113,6 +113,7 @@ local defaultDB = {
     soundAlert = true,         -- Sonido en alerta roja
     soundWarn = false,         -- Sonido suave en alerta amarilla/naranja
     soundFile = "Sound\\Interface\\RaidWarning.wav",
+    alertVolume = 0.7,         -- Volumen temporal de alertas (0.10 a 1.00)
     iconSize = 44,
     hudScale = 1.0,
     showKeybinds = true,
@@ -186,4 +187,60 @@ function PA:InitDB()
         PanicAuraDB.slots = PA:GetClassDefaults()
     end
     PA.db = PanicAuraDB
+end
+
+--------------------------------------------------------------------------------
+-- Control Inteligente de Volumen y Reproducción de Audio
+--------------------------------------------------------------------------------
+local audioTimerFrame = CreateFrame("Frame")
+local originalMasterVol = nil
+local isPlayingAlertAudio = false
+
+-- Restablecer volumen en caso de deslogueo o recarga de interfaz
+audioTimerFrame:RegisterEvent("PLAYER_LOGOUT")
+audioTimerFrame:RegisterEvent("PLAYER_LEAVING_WORLD")
+audioTimerFrame:SetScript("OnEvent", function(self, event)
+    if originalMasterVol ~= nil then
+        pcall(SetCVar, "Sound_MasterVolume", tostring(originalMasterVol))
+        originalMasterVol = nil
+        isPlayingAlertAudio = false
+    end
+end)
+
+function PA:PlayAlertSound(sound, isFile, duration)
+    if not sound then return end
+    duration = duration or 3.0
+    local targetVol = (PA.db and PA.db.alertVolume) or 0.7
+
+    -- Guardar el volumen maestro del usuario antes de la alerta (solo si no hay otra alerta activa)
+    if not isPlayingAlertAudio then
+        originalMasterVol = tonumber(GetCVar("Sound_MasterVolume") or "1") or 1
+        isPlayingAlertAudio = true
+    end
+
+    -- Aplicar temporalmente el volumen configurado en el addon
+    pcall(SetCVar, "Sound_MasterVolume", tostring(targetVol))
+
+    -- Reproducir audio en canal Master
+    if isFile then
+        local ok = pcall(PlaySoundFile, sound, "Master")
+        if not ok then pcall(PlaySoundFile, sound) end
+    else
+        pcall(PlaySound, sound)
+    end
+
+    -- Programar restauración al volumen previo del juego
+    audioTimerFrame.elapsed = 0
+    audioTimerFrame.duration = duration
+    audioTimerFrame:SetScript("OnUpdate", function(self, dt)
+        self.elapsed = self.elapsed + dt
+        if self.elapsed >= self.duration then
+            self:SetScript("OnUpdate", nil)
+            isPlayingAlertAudio = false
+            if originalMasterVol ~= nil then
+                pcall(SetCVar, "Sound_MasterVolume", tostring(originalMasterVol))
+                originalMasterVol = nil
+            end
+        end
+    end)
 end

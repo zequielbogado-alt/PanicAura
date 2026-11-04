@@ -176,11 +176,22 @@ do
     local c4 = CheckBox(p, "Destello también en alerta amarilla/naranja", "flashWarn", "Desmarcalo si querés que el destello aparezca solo en vida crítica (rojo).", c3)
     local c5 = CheckBox(p, "Mostrar teclas rápidas en los iconos", "showKeybinds", nil, c4, function() PA:UpdateLayout() end)
 
-    local h2 = Header(p, "Sonido", c5, -8)
+    local h2 = Header(p, "Sonido de Alertas", c5, -8)
     local s1 = CheckBox(p, "Sonido en alerta roja (vida crítica)", "soundAlert", nil, h2)
-    local s2 = CheckBox(p, "Sonido suave en alerta amarilla/naranja", "soundWarn", "Se reproduce solo al subir de nivel de alerta.", s1)
+    local s2 = CheckBox(p, "Sonido suave en amarilla/naranja", "soundWarn",
+        "Se reproduce solo al subir de nivel de alerta.", s1, nil, 0, 238, "TOPLEFT")
 
-    local h3 = Header(p, "Apariencia", s2, -8)
+    -- Slider de volumen con botón de prueba interactivo
+    local slVol = Slider(p, "Volumen de alertas", "alertVolume", 10, 100, 5, "%d%%", 100, s1, nil, 4, -24, 155)
+    local btnTestSound = Button(p, "Probar sonido", 95, function()
+        if PA.PlayAlertSound then
+            PA:PlayAlertSound(PA.db.soundFile or "Sound\\Interface\\RaidWarning.wav", true, 2.5)
+        end
+    end)
+    btnTestSound:SetPoint("LEFT", slVol.val, "RIGHT", 16, 0)
+    Tooltip(btnTestSound, "Reproduce el sonido de alerta al nivel de volumen seleccionado.")
+
+    local h3 = Header(p, "Apariencia", slVol, -16)
     local sl1 = Slider(p, "Tamaño de iconos", "iconSize", 32, 64, 2, "%d px", 1, h3, function() PA:UpdateLayout() end, 4, -22, 155)
     local sl2 = Slider(p, "Escala de la barra", "hudScale", 70, 150, 10, "%d%%", 100, h3, function() PA:ApplyScale() end, 238, -22, 155)
     local sl3 = Slider(p, "Intensidad del destello", "flashIntensity", 20, 100, 10, "%d%%", 100, sl1, nil, 4, -24, 155)
@@ -448,12 +459,9 @@ configFrame:SetScript("OnShow", function()
         local d = PA.db.slots[i]
         if d then
             editBoxes[i].eb:SetText(d.name or "")
-            editBoxes[i].eb:SetCursorPosition(0)
-            editBoxes[i].cb:SetChecked(d.enabled)
+            editBoxes[i].cb:SetChecked(d.enabled and true or false)
         end
     end
-    btnUnlock:SetText(PA.db.locked and "Mover barra" or "Bloquear")
-    ShowPage(1)
 end)
 
 configFrame:SetScript("OnHide", function()
@@ -482,6 +490,15 @@ SlashCmdList["PANICAURA"] = function(msg)
         ToggleTest(2)
     elseif msg == "testzone" or msg == "tz" then
         if PA.TestZoneAlert then PA:TestZoneAlert() end
+    elseif msg:find("^vol") then
+        local num = tonumber(msg:match("%d+"))
+        if num then
+            PA.db.alertVolume = math.max(10, math.min(100, num)) / 100
+            DEFAULT_CHAT_FRAME:AddMessage(string.format("|cffff2222PanicAura:|r Volumen de alertas ajustado al |cffffff00%d%%|r", math.floor(PA.db.alertVolume * 100 + 0.5)))
+            if PA.PlayAlertSound then PA:PlayAlertSound(PA.db.soundFile or "Sound\\Interface\\RaidWarning.wav", true, 2.0) end
+        else
+            DEFAULT_CHAT_FRAME:AddMessage(string.format("|cffff2222PanicAura:|r Volumen actual de alertas: |cffffff00%d%%|r (usá /pa vol 10-100)", math.floor(((PA.db and PA.db.alertVolume) or 0.7) * 100 + 0.5)))
+        end
     elseif msg == "dr0" or msg == "vivo" or msg == "purificar" then
         PA.drStage = 0
         if PA.db then PA.db.drStage = 0 end

@@ -177,10 +177,14 @@ function PA:ShowZoneDangerAlert(zoneName, minLvl, maxLvl, playerLevel, levelDiff
     banner:SetAlpha(1.0)
     banner:Show()
 
-    -- Sonido de advertencia
+    -- Sonido de advertencia con control de volumen
     if PA.db.zoneDangerSound then
         local sound = PA.db.zoneDangerSoundFile or "Sound\\Interface\\RaidWarning.wav"
-        PlaySoundFile(sound)
+        if PA.PlayAlertSound then
+            PA:PlayAlertSound(sound, true, 3.5)
+        else
+            PlaySoundFile(sound)
+        end
     end
 
     -- Destellos en los bordes
@@ -292,4 +296,3 @@ zoneWatcher:SetScript("OnUpdate", function(self, elapsed)
         end
     end
 end)
-

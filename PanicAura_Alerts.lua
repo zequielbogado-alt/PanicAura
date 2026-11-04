@@ -187,10 +187,18 @@ function PA:StartPanic(reason, level, sub)
     local now = GetTime()
     if level > prev and now - lastSoundTime > 2 and not PA.setupMode then
         if level == 3 and PA.db and PA.db.soundAlert then
-            PlaySoundFile(PA.db.soundFile or "Sound\\Interface\\RaidWarning.wav")
+            if PA.PlayAlertSound then
+                PA:PlayAlertSound(PA.db.soundFile or "Sound\\Interface\\RaidWarning.wav", true, 3.0)
+            else
+                PlaySoundFile(PA.db.soundFile or "Sound\\Interface\\RaidWarning.wav")
+            end
             lastSoundTime = now
         elseif level < 3 and PA.db and PA.db.soundWarn then
-            PlaySound("TellMessage")
+            if PA.PlayAlertSound then
+                PA:PlayAlertSound("TellMessage", false, 1.5)
+            else
+                PlaySound("TellMessage")
+            end
             lastSoundTime = now
         end
     end

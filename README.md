@@ -1,14 +1,14 @@
-# 🚨 PanicAura v1.4.0 — Asistente de Supervivencia para TuWoW (Die & Rise + Hardcore)
+# 🚨 PanicAura v1.4.1 — Asistente de Supervivencia para TuWoW (Die & Rise + Hardcore)
 
-> ### 📥 **DESCARGA DIRECTA (ÚLTIMA VERSIÓN v1.4.0)**
+> ### 📥 **DESCARGA DIRECTA (ÚLTIMA VERSIÓN v1.4.1)**
 > 
-> 🚀 **[Descargar PanicAura v1.4.0 (.ZIP)](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.0/PanicAura_v1.4.0.zip)**  
-> 📦 **[Descargar PanicAura v1.4.0 (.RAR)](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.0/PanicAura_v1.4.0.rar)**  
-> 🏷️ Ver todas las versiones en [Releases de GitHub](https://github.com/zequielbogado-alt/PanicAura/releases/tag/v1.4.0)
+> 🚀 **[Descargar PanicAura v1.4.1 (.ZIP)](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.1/PanicAura_v1.4.1.zip)**  
+> 📦 **[Descargar PanicAura v1.4.1 (.RAR)](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.1/PanicAura_v1.4.1.rar)**  
+> 🏷️ Ver todas las versiones en [Releases de GitHub](https://github.com/zequielbogado-alt/PanicAura/releases/tag/v1.4.1)
 > 
 > **Verificación de Seguridad (SHA-256):**  
-> • `.zip`: `876E1F8FB2C43F41A57AAB0204D443E8CC8720BACF74FE481423578079D78AC7`  
-> • `.rar`: `1FA8DECEFB1290CC31C849258E00DD70A88B79B07D49619A9A674C8A6F52B2A2`
+> • `.zip`: `6729EE15286777B79AC6A744A623EC0CDB4A04EE3017170E7DB0C2041D9A008D`  
+> • `.rar`: `A7142D136D22D9E9CD1498D90D4F67247FE8D7FCB8859308DCFE02CBB41A312F`
 
 ---
 
@@ -30,7 +30,14 @@ El addon evalúa la severidad del combate y adapta dinámicamente sus avisos vis
 
 ---
 
-### 2. 💀 Integración con el Modo "Die & Rise" y Elixir de Purificación
+### 2. 🔊 Control Inteligente de Volumen de Alertas (Nuevo en v1.4.1)
+* **Regulación independiente (10% a 100%):** En la pestaña *General* dispones de un deslizador para ajustar el volumen con el que se reproducen las alarmas de pánico, los avisos de zonas peligrosas y los efectos sonoros.
+* **Restauración Automática Inteligente:** El addon detecta y memoriza tu volumen general de WoW antes de sonar. Durante la alerta aplica tu nivel configurado, y **apenas termina el aviso restaura exactamente el volumen que tenías**, sin alterar tus ajustes generales del juego ni dejar el cliente con el volumen cambiado.
+* **Botón [Probar sonido] y comando rápido:** Puedes escuchar cómo suena directamente desde el panel o ajustarlo escribiendo `/pa vol 50`.
+
+---
+
+### 3. 💀 Integración con el Modo "Die & Rise" y Elixir de Purificación
 PanicAura comprende todas las mecánicas nativas de **Die & Rise** de TuWoW:
 * **Barra de Estado Siempre Visible:** Muestra un widget discreto con tu condición actual: **Vivo**, **Putrefacto (1 Muerte)** o **Esquelético**.
 * **Detección y Auto-Recuperación con Elixir de Purificación:** Al consumir un *Elixir de Purificación* (dropeado por rares por franjas de nivel) o recibirlo en comercio, el addon detecta inmediatamente la purificación en tiempo real y **actualiza el estado a "Vivo" al instante** sin necesidad de reloguear ni reiniciar la interfaz. Además, te recuerda por chat si llevas un elixir en tus bolsas estando putrefacto.
@@ -40,39 +47,39 @@ PanicAura comprende todas las mecánicas nativas de **Die & Rise** de TuWoW:
 
 ---
 
-### 3. 🗺️ Alerta de Zona Peligrosa (Nivel Superior)
+### 4. 🗺️ Alerta de Zona Peligrosa (Nivel Superior)
 * **Aviso Preventivo al Cruzar Fronteras:** Si viajas o ingresas a una zona donde los enemigos superan tu nivel en más de lo configurado (por defecto **+1 nivel**, ajustable de +1 a +5), el addon te advierte antes de que sea tarde.
-* **Diseño Limpio y No Invasivo:** **No despliega barras de pánico**. Muestra un cartel central elegante con el nombre y nivel de la zona (`¡ZONA PELIGROSA: BOSQUE DEL OCASO! Nivel: 18 - 30`), emite **3 pulsos suaves de destello** perimetral y reproduce un sonido de alerta que se desvanece tras 3.5 segundos.
+* **Diseño Limpio y No Invasivo:** **No despliega barras de pánico**. Muestra un cartel central elegante con el nombre y nivel de la zona (`¡ZONA PELIGROSA: BOSQUE DEL OCASO! Nivel: 18 - 30`), emite **3 pulsos suaves de destello** perimetral y reproduce un sonido de alerta a tu volumen configurado.
 * **Base de datos completa:** Cubre todas las zonas abiertas, mazmorras y bandas del juego con soporte bilingüe (`esES` y `enUS`). Puedes probarla con `/pa testzone`.
 
 ---
 
-### 4. ⚔️ Contador de Agresores y Detector de "Golpe Brutal"
+### 5. ⚔️ Contador de Agresores y Detector de "Golpe Brutal"
 * **Contador de Atacantes en Vivo:** Al lado de la barra de emergencia se muestra en tiempo real cuántos enemigos te tienen como objetivo directo.
 * **Detector de Golpe Brutal:** Si sufres un impacto que reduce más del **35% de tu vida máxima de una sola vez**, se dispara la alerta roja instantáneamente advirtiéndote del peligro letal.
 
 ---
 
-### 5. 🛡️ Barra de Salvavidas Inteligente y Configurable
+### 6. 🛡️ Barra de Salvavidas Inteligente y Configurable
 * **Auto-configuración por Clase:** Carga automáticamente los mejores recursos defensivos según juegues Cazador, Brujo, Mago, Paladín, Sacerdote, Pícaro, Druida, Guerrero, Chamán o Caballero de la Muerte.
 * **Detección Automática de Atajos (Keybinds):** Analiza todas tus barras de acción (1 a 120, macros y libro) y proyecta en grande la tecla asignada (`1`, `F`, `Shift-R`, etc.), además de permitir clic directo sobre los iconos.
 * **Asignación Drag & Drop:** Arrastra libremente cualquier hechizo, objeto, piedra de salud o macro desde tu libro o mochilas hacia la barra.
 
 ---
 
-### 6. 📜 Historial de Muertes
+### 7. 📜 Historial de Muertes
 En la pestaña **Die & Rise** del menú de configuración queda registrado el historial detallado de las muertes de tu personaje: **fecha, hora, nivel, zona, agresor, habilidad final** y cambio de estado correspondiente.
 
 ---
 
-## 🏗️ Arquitectura Modular (v1.4.0)
+## 🏗️ Arquitectura Modular
 
 Para garantizar máximo rendimiento, mantenibilidad y evitar código monolítico, PanicAura está estructurado en 11 módulos independientes:
 
 ```
 Interface/AddOns/PanicAura/
 ├── PanicAura.toc             # Metadatos y secuencia ordenada de carga
-├── PanicAura_Core.lua        # Variables guardadas, base de datos y perfiles por clase
+├── PanicAura_Core.lua        # Variables guardadas, base de datos, perfiles y control de audio inteligente
 ├── PanicAura_Minimap.lua     # Botón arrastrable del minimapa (ForeverUI y clásico)
 ├── PanicAura_Flash.lua       # Marco de viñeta y destellos perimetrales de pantalla
 ├── PanicAura_HUD.lua         # Marco principal, banner de aviso y contador de atacantes
@@ -82,14 +89,14 @@ Interface/AddOns/PanicAura/
 ├── PanicAura_Events.lua      # Control de eventos del juego, combat log y ticker amortiguado
 ├── PanicAura_ZoneData.lua    # Catálogo de niveles de zonas abiertas, mazmorras y raids
 ├── PanicAura_ZoneAlert.lua   # Módulo visual y sonoro de alerta de zonas peligrosas
-└── PanicConfig.lua           # Interfaz gráfica de ajustes (4 pestañas) y comandos /pa
+└── PanicConfig.lua           # Interfaz gráfica de ajustes (4 pestañas, control de volumen) y comandos /pa
 ```
 
 ---
 
 ## 💻 Instalación Rápida
 
-1. Descarga el paquete [**`PanicAura_v1.4.0.zip`**](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.0/PanicAura_v1.4.0.zip) o [**`PanicAura_v1.4.0.rar`**](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.0/PanicAura_v1.4.0.rar).
+1. Descarga el paquete [**`PanicAura_v1.4.1.zip`**](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.1/PanicAura_v1.4.1.zip) o [**`PanicAura_v1.4.1.rar`**](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.1/PanicAura_v1.4.1.rar).
 2. Extrae la carpeta **`PanicAura`** dentro del directorio de addons de tu juego:
    ```
    C:\TuWoW\TuWoW-Client\Interface\AddOns\PanicAura
@@ -110,6 +117,7 @@ Interface/AddOns/PanicAura/
 | Comando | Descripción |
 |---|---|
 | `/pa` o `/panicaura` | Abre o cierra la ventana de configuración |
+| `/pa vol [10-100]` | Consulta o ajusta el volumen de alertas (ej: `/pa vol 60`) |
 | `/pa testzone` o `/pa tz` | Simula la **Alerta de Zona Peligrosa** |
 | `/pa test1` | Prueba la alerta **Amarilla** |
 | `/pa test2` | Prueba la alerta **Naranja** |
