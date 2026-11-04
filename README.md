@@ -56,11 +56,18 @@ En la pestaña **Die & Rise** del menú de opciones queda guardado un registro d
 
 ## 📦 Estructura Modular del Addon
 
-Para mantener el código limpio, optimizado y sin archivos gigantes monolíticos, PanicAura está organizado en módulos independientes:
-* **`PanicAura_ZoneData.lua`**: Base de datos de niveles de todas las zonas y mazmorras de Azeroth, Terrallende y Rasganorte (en español e inglés).
-* **`PanicAura_ZoneAlert.lua`**: Módulo visual y de sonido para alertas preventivas de zonas peligrosas.
-* **`PanicAura.lua`**: Lógica central de supervivencia, alertas de vida, contador de atacantes, keybinds y Die & Rise.
-* **`PanicConfig.lua`**: Panel visual de opciones con 4 pestañas y comandos slash.
+Para mantener el código limpio, optimizado, rápido y sin archivos gigantes monolíticos (>800 líneas), PanicAura está 100% modularizado en archivos especializados:
+* **`PanicAura_Core.lua`**: Configuración base, base de datos (`SavedVariables`) y valores por clase.
+* **`PanicAura_Minimap.lua`**: Botón arrastrable del minimapa (compatible con ForeverUI y clásico).
+* **`PanicAura_Flash.lua`**: Viñeta y destellos pulsantes en los bordes de la pantalla.
+* **`PanicAura_HUD.lua`**: Barra principal, cartel de alerta superior y contador de atacantes.
+* **`PanicAura_Slots.lua`**: Detección de atajos de teclado (*keybinds*), ranuras salvavidas y enfriamientos (*cooldowns*).
+* **`PanicAura_DieAndRise.lua`**: Indicador visual Die & Rise, detección de almas, corporeidad, náuseas y elixires de purificación.
+* **`PanicAura_Alerts.lua`**: Lógica de cálculo de peligro (salud crítica, rango de cazador, atacantes, golpes brutales).
+* **`PanicAura_Events.lua`**: Registro de combate, eventos del servidor y bucle de actualización en tiempo real.
+* **`PanicAura_ZoneData.lua`**: Base de datos de niveles de todas las zonas y mazmorras (español e inglés).
+* **`PanicAura_ZoneAlert.lua`**: Módulo visual y sonoro para alertas preventivas de zonas peligrosas.
+* **`PanicConfig.lua`**: Panel visual de opciones con 4 pestañas y comandos slash (`/pa`).
 
 ---
 
