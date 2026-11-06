@@ -1,14 +1,14 @@
-# 🚨 PanicAura v1.4.1 — Asistente de Supervivencia para TuWoW (Die & Rise + Hardcore)
+# 🚨 PanicAura v1.4.2 — Asistente de Supervivencia para TuWoW (Die & Rise + Hardcore)
 
-> ### 📥 **DESCARGA DIRECTA (ÚLTIMA VERSIÓN v1.4.1)**
+> ### 📥 **DESCARGA DIRECTA (ÚLTIMA VERSIÓN v1.4.2)**
 > 
-> 🚀 **[Descargar PanicAura v1.4.1 (.ZIP)](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.1/PanicAura_v1.4.1.zip)**  
-> 📦 **[Descargar PanicAura v1.4.1 (.RAR)](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.1/PanicAura_v1.4.1.rar)**  
-> 🏷️ Ver todas las versiones en [Releases de GitHub](https://github.com/zequielbogado-alt/PanicAura/releases/tag/v1.4.1)
+> 🚀 **[Descargar PanicAura v1.4.2 (.ZIP)](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.2/PanicAura_v1.4.2.zip)**  
+> 📦 **[Descargar PanicAura v1.4.2 (.RAR)](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.2/PanicAura_v1.4.2.rar)**  
+> 🏷️ Ver todas las versiones en [Releases de GitHub](https://github.com/zequielbogado-alt/PanicAura/releases/tag/v1.4.2)
 > 
 > **Verificación de Seguridad (SHA-256):**  
-> • `.zip`: `6729EE15286777B79AC6A744A623EC0CDB4A04EE3017170E7DB0C2041D9A008D`  
-> • `.rar`: `A7142D136D22D9E9CD1498D90D4F67247FE8D7FCB8859308DCFE02CBB41A312F`
+> • `.zip`: `9167CD84D8616BF1DDA774C1422EDF65B07FDC579C279FB49592F8FCB0D129EB`  
+> • `.rar`: `92500173FF1F171B29005CF155AFB136E5FE1F8A66011D9B13EB9853F073E937`
 
 ---
 
@@ -44,6 +44,7 @@ PanicAura comprende todas las mecánicas nativas de **Die & Rise** de TuWoW:
 * **Margen de Vida Automático:** Si estás **Putrefacto**, el addon eleva automáticamente los umbrales de alerta un **+10%** antes (y un **+15%** si estás **Esquelético**), otorgándote mayor tiempo de reacción.
 * **Bloqueo Visual de Pociones en Esquelético:** Dado que los esqueletos no pueden beber pociones, PanicAura estampa una **`X` roja de bloqueo** sobre las ranuras de pociones de tu barra para evitar clics inútiles.
 * **Progreso de Almas (0 / 300) y Corporeidad:** Monitorea en vivo tus almas cosechadas para recuperar el cuerpo (festejando al llegar a 300) y rastrea la cuenta regresiva de **36 segundos de Corporeidad** tras consumir un alma.
+* **Filtro Inteligente de Monturas y Disipaciones (Nuevo en v1.4.2):** Se discriminan las monturas esqueléticas y hechizos de disipación como *Purificar* (Paladín/Sacerdote), evitando falsas alarmas de purificación o cambio de estado al desmontar o recibir disipaciones en combate.
 
 ---
 
@@ -96,7 +97,7 @@ Interface/AddOns/PanicAura/
 
 ## 💻 Instalación Rápida
 
-1. Descarga el paquete [**`PanicAura_v1.4.1.zip`**](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.1/PanicAura_v1.4.1.zip) o [**`PanicAura_v1.4.1.rar`**](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.1/PanicAura_v1.4.1.rar).
+1. Descarga el paquete [**`PanicAura_v1.4.2.zip`**](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.2/PanicAura_v1.4.2.zip) o [**`PanicAura_v1.4.2.rar`**](https://github.com/zequielbogado-alt/PanicAura/releases/download/v1.4.2/PanicAura_v1.4.2.rar).
 2. Extrae la carpeta **`PanicAura`** dentro del directorio de addons de tu juego:
    ```
    C:\TuWoW\TuWoW-Client\Interface\AddOns\PanicAura

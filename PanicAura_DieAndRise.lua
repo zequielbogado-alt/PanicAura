@@ -119,67 +119,87 @@ end)
 drWidget:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 --------------------------------------------------------------------------------
--- 4. Escaneo de Auras (Buffs/Debuffs) para detectar Estado
+-- 4. Escaneo Seguro de Auras (Buffs/Debuffs) para detectar Estado
 --------------------------------------------------------------------------------
+local function IsMountAura(name)
+    if not name then return false end
+    local low = name:lower()
+    return low:find("caballo") or low:find("corcel") or low:find("steed") or low:find("horse")
+        or low:find("montura") or low:find("mount") or low:find("kodo") or low:find("raptor")
+        or low:find("lobo") or low:find("wolf") or low:find("carnero") or low:find("ram")
+        or low:find("zancudo") or low:find("strider") or low:find("halcón") or low:find("halcon")
+        or low:find("hawk") or low:find("oso") or low:find("bear") or low:find("draco")
+        or low:find("drake") or low:find("grifo") or low:find("gryphon") or low:find("mantícora")
+        or low:find("manticora") or low:find("hipogrifo") or low:find("hippogryph")
+        or low:find("jinete") or low:find("destrero") or low:find("tigre") or low:find("leopardo")
+        or low:find("sable") or low:find("cohete") or low:find("alfombra") or low:find("elekk")
+        or low:find("talbuk") or low:find("raya") or low:find("tortuga")
+end
+
 function PA:ScanPlayerAurasForDR()
+    local isMounted = (IsMounted and IsMounted())
     local foundStage = nil
     local foundSouls = nil
+
+    -- 1. Escanear Buffs (Aura de Almas / Corporeidad)
     for i = 1, 40 do
         local name, _, _, stacks, _, duration, expTime, _, _, _, id = UnitBuff("player", i)
         if not name then break end
         local low = name:lower()
+
+        -- El aura oficial de Esquelético es el Spell ID 900114 (Aura de Almas de TuWoW)
         if id == SOUL_SPELL_ID then
             foundStage = 2
             foundSouls = stacks
-        elseif low:find("esquelet") or low:find("esquelét") or low:find("skeleton") then
-            foundStage = 2
-        elseif low:find("putrefact") then
-            if foundStage ~= 2 then foundStage = 1 end
+        elseif not isMounted and not IsMountAura(name) then
+            -- Solo considerar esquelético si NO es una montura y el nombre coincide estrictamente
+            if low == "esquelético" or low == "esqueletico" or low == "aura de almas" or low == "forma esquelética" then
+                foundStage = 2
+            end
         end
-        if duration and duration >= 30 and duration <= 40 and (low:find("corpor") or low:find("alma") or low:find("carne")) then
-            PA.corporealEnd = expTime
+
+        -- Rastrear Corporeidad (36 segundos al sacrificar un alma en Esquelético)
+        if duration and duration >= 30 and duration <= 40 and not isMounted and not IsMountAura(name) then
+            if low == "corporeidad" or low == "cuerpo temporal" or (low:find("corpor") and not low:find("montura")) then
+                PA.corporealEnd = expTime
+            end
         end
     end
+
+    -- 2. Escanear Debuffs (Putrefacto de TuWoW)
     for i = 1, 40 do
         local name, _, _, _, _, duration, expTime, _, _, _, id = UnitDebuff("player", i)
         if not name then break end
         local low = name:lower()
-        if low:find("esquelet") or low:find("esquelét") or low:find("skeleton") then
-            foundStage = 2
-        elseif low:find("putrefact") then
+
+        -- Debe ser el estado Putrefacto de Die & Rise, NO enfermedades comunes de bichos (peste putrefacta, etc.)
+        if low == "putrefacto" or low == "putrefacción" or low == "putrefaccion" or low == "estado: putrefacto" then
             if foundStage ~= 2 then foundStage = 1 end
+        elseif (low == "esquelético" or low == "esqueletico") and not isMounted and not IsMountAura(name) then
+            foundStage = 2
         end
-        if duration and duration >= 30 and duration <= 40 and (low:find("corpor") or low:find("alma") or low:find("carne")) then
-            PA.corporealEnd = expTime
+
+        if duration and duration >= 30 and duration <= 40 and not isMounted and not IsMountAura(name) then
+            if low == "corporeidad" or low == "cuerpo temporal" or (low:find("corpor") and not low:find("montura")) then
+                PA.corporealEnd = expTime
+            end
         end
     end
 
-    local newStage = foundStage or 0
-    local prevStage = PA.drStage or (PA.db and PA.db.drStage) or 0
-
-    if prevStage ~= newStage then
-        -- Si pasó de Putrefacto (1) o Esquelético (2) a Vivo (0)
-        if prevStage > 0 and newStage == 0 then
-            PA.nauseaActive = nil
-            PA.corporealEnd = nil
-            if PA.PlayAlertSound then
-                PA:PlayAlertSound("LevelUp", false, 2.0)
-            else
-                PlaySound("LevelUp")
-            end
-            PA.tempAlert = {
-                title = "¡HAS SIDO PURIFICADO!",
-                sub = "Recuperaste el estado VIVO · Vidas intactas",
-                level = 1,
-                untilTime = GetTime() + 6,
-            }
+    -- 3. Actualización de estado seguras:
+    -- Si encontramos activamente el aura de Esquelético (ID 900114 o debuff real) o Putrefacto real:
+    if foundStage then
+        if PA.drStage ~= foundStage then
+            PA.drStage = foundStage
+            if PA.db then PA.db.drStage = foundStage end
+            PA:UpdateDRWidget()
         end
-        PA.drStage = newStage
-        if PA.db then PA.db.drStage = newStage end
+    elseif PA.drStage == 2 and not foundStage then
+        -- Si estaba marcado erróneamente como Esquelético (ej. guardado previo al montar un caballo esquelético),
+        -- pero no tiene el Aura de Almas (900114), sanear silenciosamente a 0 (Vivo) sin falsas alarmas.
+        PA.drStage = 0
+        if PA.db then PA.db.drStage = 0 end
         PA:UpdateDRWidget()
-    else
-        PA.drStage = newStage
-        if PA.db then PA.db.drStage = newStage end
     end
 
     if foundSouls and not PA.drSoulsFresh then
@@ -264,8 +284,18 @@ function PA:HandleDieAndRiseChat(msg)
     local low = msg:lower()
     local now = GetTime()
 
-    -- 0) Purificación (Elixir de Purificación)
-    if low:find("purific") or low:find("elixir de purific") or low:find("dejas de estar putrefacto") or low:find("vuelves a estar vivo") or low:find("has sido purificado") then
+    -- 0) Purificación con Elixir de Purificación
+    -- IMPORTANTE: Solo disparar si el jugador está actualmente Putrefacto o Esquelético (drStage > 0)
+    -- y si el mensaje es del Elixir de Purificación o recuperación de Die & Rise.
+    -- NUNCA disparar con hechizos de clase como "Purificar" (Paladín/Sacerdote) ni si el jugador ya está Vivo.
+    local isPurificationMsg = low:find("elixir de purific")
+        or low:find("dejas de estar putrefacto")
+        or low:find("vuelves a estar vivo")
+        or low:find("has sido purificado de la putrefacci")
+        or (low:find("purific") and (low:find("putrefact") or low:find("elixir")))
+
+    local currentStage = PA.drStage or (PA.db and PA.db.drStage) or 0
+    if isPurificationMsg and currentStage > 0 then
         PA.nauseaActive = nil
         PA.corporealEnd = nil
         PA.drStage = 0
@@ -283,8 +313,8 @@ function PA:HandleDieAndRiseChat(msg)
         }
         PA:UpdateDRWidget()
         if PA.CheckPanicState then PA:CheckPanicState() end
-    -- 1) Pre-aviso de náuseas en estado Putrefacto
-    elseif PA.db.drNauseaWarn and (low:find("estomago putrefacto rechaza") or low:find("estómago putrefacto rechaza") or low:find("sientes fuertes nauseas") or low:find("sientes fuertes náuseas")) then
+    -- 1) Pre-aviso de náuseas en estado Putrefacto (solo si está en stage 1)
+    elseif PA.db.drNauseaWarn and currentStage == 1 and (low:find("estomago putrefacto rechaza") or low:find("estómago putrefacto rechaza") or low:find("sientes fuertes nauseas") or low:find("sientes fuertes náuseas")) then
         PA.nauseaActive = now
         PA.tempAlert = {
             title = "¡NÁUSEAS! TU ESTÓMAGO RECHAZA LA COMIDA",
@@ -294,8 +324,8 @@ function PA:HandleDieAndRiseChat(msg)
         }
         PA:UpdateDRWidget()
         if PA.CheckPanicState then PA:CheckPanicState() end
-    -- 2) Vómito inminente / activo
-    elseif PA.db.drNauseaWarn and (low:find("no puedes contener las nauseas") or low:find("no puedes contener las náuseas") or low:find("comienzas a vomitar")) then
+    -- 2) Vómito inminente / activo (solo si está en stage 1)
+    elseif PA.db.drNauseaWarn and currentStage == 1 and (low:find("no puedes contener las nauseas") or low:find("no puedes contener las náuseas") or low:find("comienzas a vomitar")) then
         PA.nauseaActive = nil
         PA.tempAlert = {
             title = "¡ESTÁS VOMITANDO!",
@@ -305,8 +335,8 @@ function PA:HandleDieAndRiseChat(msg)
         }
         PA:UpdateDRWidget()
         if PA.CheckPanicState then PA:CheckPanicState() end
-    -- 3) Sacrificio de 1 alma por 36 segundos de corporeidad
-    elseif PA.db.drCorporealTrack and ((low:find("sacrifica") and low:find("alma")) or low:find("36 segundo") or low:find("corporeidad")) then
+    -- 3) Sacrificio de 1 alma por 36 segundos de corporeidad (solo si está en stage 2)
+    elseif PA.db.drCorporealTrack and currentStage == 2 and ((low:find("sacrifica") and low:find("alma")) or low:find("36 segundo") or low:find("corporeidad")) then
         PA.corporealEnd = now + 36
         PA.tempAlert = {
             title = "¡CORPOREIDAD PROVISORIA (36 s)!",
